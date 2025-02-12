@@ -76,7 +76,7 @@
                 return;
             }
 
-            fetch('/calls/get_twilio_token/')
+            fetch('/get_twilio_token/')
                 .then(response => response.json())
                 .then(data => {
                     setupTwilioDevice(data.token);
