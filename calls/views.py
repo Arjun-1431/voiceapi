@@ -15,11 +15,6 @@ from twilio.rest import Client
 import urllib.parse
 
 
-from django.http import HttpResponse
-
-def index(request):
-    return HttpResponse("Welcome to the Voice API!")
-
 
 def make_outbound_call(request):
     """Initiates an outbound call to a real phone number using Twilio API."""
@@ -31,7 +26,7 @@ def make_outbound_call(request):
 
     try:
         # ✅ Make sure Twilio sends the call to the correct endpoint
-        twiml_url = f""
+        twiml_url = f"http://91.108.104.12:8000/calls/handle_call/?to={urllib.parse.quote(to_number)}"
 
         call = client.calls.create(
             url=twiml_url,  # ✅ Twilio will fetch call instructions from this URL
