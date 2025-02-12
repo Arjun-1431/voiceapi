@@ -15,6 +15,11 @@ from twilio.rest import Client
 import urllib.parse
 
 
+from django.http import HttpResponse
+
+def index(request):
+    return HttpResponse("Welcome to the Voice API!")
+
 
 def make_outbound_call(request):
     """Initiates an outbound call to a real phone number using Twilio API."""
