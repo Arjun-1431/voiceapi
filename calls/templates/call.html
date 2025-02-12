@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Twilio Browser Call</title>
+    <script src="https://sdk.twilio.com/js/client/v1.14/twilio.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white flex justify-center items-center h-screen">
+
+    <div class="bg-gray-800 p-6 rounded-lg shadow-lg w-96 text-center">
+        <h2 class="text-2xl font-bold mb-4">📞 Voice call</h2>
+
+        <!-- Editable Call Display -->
+        <input type="text" id="callDisplay" 
+               class="bg-gray-700 p-3 rounded-lg text-lg font-mono mb-3 w-full text-center outline-none focus:ring-2 focus:ring-blue-500" 
+               value="+" />
+
+        <!-- Dialpad -->
+        <div class="grid grid-cols-3 gap-3 mb-4">
+            <button class="btn" onclick="appendToDisplay('1')">1</button>
+            <button class="btn" onclick="appendToDisplay('2')">2</button>
+            <button class="btn" onclick="appendToDisplay('3')">3</button>
+            <button class="btn" onclick="appendToDisplay('4')">4</button>
+            <button class="btn" onclick="appendToDisplay('5')">5</button>
+            <button class="btn" onclick="appendToDisplay('6')">6</button>
+            <button class="btn" onclick="appendToDisplay('7')">7</button>
+            <button class="btn" onclick="appendToDisplay('8')">8</button>
+            <button class="btn" onclick="appendToDisplay('9')">9</button>
+            <button class="btn" onclick="appendToDisplay('*')">*</button>
+            <button class="btn" onclick="appendToDisplay('0')">0</button>
+            <button class="btn" onclick="appendToDisplay('#')">#</button>
+            <button class="btn bg-blue-500" style="border-radius: 10%; width: 100px; height: 50px;" onclick="appendToDisplay('+')">+</button>
+            <button class="btn bg-red-500 col-span-2" style="border-radius: 10%; width: 100px; height: 50px;" onclick="clearDisplay()">Clear</button>
+        </div>
+
+        <!-- Action Buttons -->
+        <button class="w-full bg-green-500 py-2 rounded-lg text-lg font-bold mb-2" onclick="startCall()">Start Call</button>
+        <button class="w-full bg-red-600 py-2 rounded-lg text-lg font-bold" onclick="endCall()">End Call</button>
+
+        <!-- Call Timer -->
+        <p id="callTimer" class="text-gray-300 mt-2 hidden">⏳ Call Duration: <span id="timer">0</span> sec</p>
+    </div>
+
+    <script>
+        let device;
+        let callStartTime;
+        let callTimerInterval;
+
+        function setupTwilioDevice(token) {
+            device = new Twilio.Device();
+            device.setup(token, { debug: true });
+
+            device.on('ready', function () {
+                console.log("✅ Twilio Client is ready!");
+            });
+
+            device.on('error', function (error) {
+                console.error("❌ Twilio Device error:", error.message);
+            });
+
+            device.on('disconnect', function () {
+                console.log("📞 Call disconnected.");
+                stopTimer();
+            });
+
+            device.on('incoming', function (conn) {
+                console.log("📞 Incoming call...");
+                conn.accept();
+            });
+        }
+
+        function startCall() {
+            const phoneNumber = document.getElementById("callDisplay").value.trim();
+            if (!phoneNumber || phoneNumber === "+") {
+                alert("❌ Please enter a valid phone number.");
+                return;
+            }
+
+            fetch('/calls/get_twilio_token/')
+                .then(response => response.json())
+                .then(data => {
+                    setupTwilioDevice(data.token);
+                    
+                    setTimeout(() => {
+                        if (device) {
+                            const connection = device.connect({ To: phoneNumber });
+
+                            connection.on('accept', function () {
+                                console.log("✅ Call connected to " + phoneNumber);
+                                startTimer();
+                            });
+
+                            connection.on('disconnect', function () {
+                                console.log("📞 Call disconnected.");
+                                stopTimer();
+                            });
+
+                            connection.on('error', function (error) {
+                                console.error("❌ Call failed:", error.message);
+                                stopTimer();
+                            });
+                        } else {
+                            console.error("❌ Twilio Device is not initialized.");
+                        }
+                    }, 2000);
+                })
+                .catch(error => console.error('❌ Error:', error));
+        }
+
+        function endCall() {
+            if (device) {
+                device.disconnectAll();
+                console.log("📞 Call ended.");
+                stopTimer();
+            }
+        }
+
+        function startTimer() {
+            callStartTime = Date.now();
+            document.getElementById("callTimer").classList.remove("hidden");
+            callTimerInterval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - callStartTime) / 1000);
+                document.getElementById("timer").innerText = elapsed;
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(callTimerInterval);
+            document.getElementById("callTimer").classList.add("hidden");
+            document.getElementById("timer").innerText = "0";
+        }
+
+        function appendToDisplay(value) {
+            const display = document.getElementById("callDisplay");
+            display.value += value;
+            display.focus();
+        }
+
+        function clearDisplay() {
+            document.getElementById("callDisplay").value = "+";
+        }
+    </script>
+
+    
+
+    <style>
+        .btn {
+            @apply bg-gray-600 p-3 rounded-lg text-lg font-bold text-white;
+        }
+        .btn:hover {
+            @apply bg-gray-500;
+        }
+    </style>
+
+    <!-- Footer
+<div class="absolute bottom-2 left-2 text-gray-400 text-sm">
+    Project is Designed and Developed by <span class="font-semibold text-white">Abhishek Lakhere</span> and <span class="font-semibold text-white">Arjun Singh</span>
+</div> -->
+
+
+</body>
+</html>
