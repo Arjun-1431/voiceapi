@@ -19,5 +19,5 @@ from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
-    path('calls/', include('calls.urls')),
+    path('', include('calls.urls')),
 ]
