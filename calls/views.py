@@ -66,16 +66,30 @@ def handle_call(request):
 
     return HttpResponse(str(response), content_type="text/xml")
 
+from django.http import JsonResponse
+from twilio.jwt.access_token import AccessToken
+from twilio.jwt.access_token.grants import VoiceGrant
+import os
+from dotenv import load_dotenv
+
+
+load_dotenv()
 
 def get_twilio_token(request):
-    """Generates Twilio token for WebRTC calls in the browser."""
-    account_sid = settings.TWILIO_ACCOUNT_SID
-    api_key = settings.TWILIO_API_KEY
-    api_secret = settings.TWILIO_API_SECRET
-    twilio_app_sid = settings.TWILIO_TWIML_APP_SID
+    """Generates Twilio token for WebRTC calls in the browser using `.env` variables directly."""
+    
+    # ✅ Get Twilio credentials directly from `.env`
+    account_sid = os.getenv("TWILIO_ACCOUNT_SID")
+    api_key = os.getenv("TWILIO_API_KEY")
+    api_secret = os.getenv("TWILIO_API_SECRET")
+    twilio_app_sid = os.getenv("TWILIO_TWIML_APP_SID")
 
-    identity = "browser_user"  # The identity used in Twilio Client
+    if not all([account_sid, api_key, api_secret, twilio_app_sid]):
+        return JsonResponse({"error": "Missing Twilio credentials in .env file"}, status=500)
 
+    identity = "browser_user"  # ✅ Identity for Twilio Client
+
+    # ✅ Generate Twilio WebRTC Token
     token = AccessToken(account_sid, api_key, api_secret, identity=identity)
     voice_grant = VoiceGrant(outgoing_application_sid=twilio_app_sid)
     token.add_grant(voice_grant)
